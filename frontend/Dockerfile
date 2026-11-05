@@ -16,7 +16,7 @@ RUN npm run build
 # ==========================================
 # Stage 2: Nginx Edge Web Server & Reverse Proxy
 # ==========================================
-FROM nginx:1.25-alpine AS runtime
+FROM nginx:1.31-alpine AS runtime
 
 # Copy custom Nginx reverse proxy configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
