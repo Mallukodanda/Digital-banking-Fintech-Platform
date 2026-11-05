@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Standard High-Assurance FinTech Log Pattern -->
+    <property name="DEV_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [corrId=%X{correlationId:-NO_CORR}] [userId=%X{userId:-ANON}] [ip=%X{clientIp:-LOCAL}] %logger{36} - %msg%n"/>
+
+    <!-- Structured JSON Formatter for Production / CloudWatch / Loki / ELK -->
+    <property name="PROD_LOG_PATTERN"
+              value='{"timestamp":"%d{yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSXXX}","thread":"%thread","level":"%level","logger":"%logger","correlationId":"%X{correlationId:-NONE}","userId":"%X{userId:-NONE}","clientIp":"%X{clientIp:-NONE}","message":"%replace(%msg){"\n"," "}"}%n'/>
+
+    <appender name="CONSOLE_DEV" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${DEV_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="CONSOLE_PROD" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PROD_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Spring Profile Specific Configuration -->
+    <springProfile name="dev,default,test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_DEV"/>
+        </root>
+        <logger name="com.fintech.bank" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="prod,staging">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PROD"/>
+        </root>
+        <logger name="com.fintech.bank" level="INFO"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.apache.kafka" level="WARN"/>
+    </springProfile>
+
+</configuration>

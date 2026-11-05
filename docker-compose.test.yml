@@ -1,0 +1,43 @@
+version: '3.8'
+
+# ==============================================================================
+# Ephemeral Test Infrastructure Composition (CI/CD Pipeline & Testcontainers)
+# ==============================================================================
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: fintech-postgres-test
+    environment:
+      POSTGRES_DB: fintech_banking_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    tmpfs:
+      - /var/lib/postgresql/data # Ephemeral RAM storage for high-speed test execution
+    ports:
+      - "5433:5432"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d fintech_banking_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: fintech-redis-test
+    command: redis-server --save "" --appendonly no # In-memory only, no disk writes
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+networks:
+  test-network:
+    name: fintech_test_network
+    driver: bridge

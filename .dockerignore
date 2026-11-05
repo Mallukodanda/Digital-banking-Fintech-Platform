@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vscode
+.idea
+target/
+frontend/
+*.md
+.env
+.env.local
+.env.*.local

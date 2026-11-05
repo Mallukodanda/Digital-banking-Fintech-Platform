@@ -1,0 +1,137 @@
+name: CI - Continuous Integration & Quality Gates
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  backend-ci:
+    name: Backend Build, Test & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile Backend & Validate Quality
+        run: mvn compile -DskipTests=true --batch-mode
+
+      - name: Run Test Suite (Unit, DataJpa, Concurrency, Ledger & E2E)
+        run: mvn test --batch-mode
+
+      - name: Run JaCoCo Coverage Verification
+        run: mvn jacoco:report jacoco:check --batch-mode
+
+      - name: Archive Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+      - name: Archive JaCoCo Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco-coverage
+          path: target/site/jacoco/
+          retention-days: 14
+
+  frontend-ci:
+    name: Frontend Lint, TypeCheck & Vite Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Type Check (Zero Type Errors)
+        run: npx tsc --noEmit
+
+      - name: Build Production Frontend Bundle
+        run: npm run build
+
+      - name: Archive Frontend Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+  security-audit:
+    name: Security & Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend Dependency Vulnerability Audit
+        working-directory: ./frontend
+        run: |
+          npm audit --audit-level=high || true
+
+      - name: Scan Secrets & Credentials Leakage (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+  ci-quality-gate:
+    name: CI Quality Gate Pass
+    needs: [backend-ci, frontend-ci, security-audit]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Evaluate Pipeline Status
+        run: |
+          if [ "${{ needs.backend-ci.result }}" != "success" ] || [ "${{ needs.frontend-ci.result }}" != "success" ]; then
+            echo "CI Quality Gate Failed: One or more critical stages did not succeed."
+            exit 1
+          fi
+          echo "All CI Quality Gates Passed Successfully!"

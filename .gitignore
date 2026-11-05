@@ -1,0 +1,34 @@
+# Compiled Java Classes & Artifacts
+target/
+*.class
+*.jar
+*.war
+
+# Maven Meta
+.mvn/
+mvnw
+mvnw.cmd
+
+# Frontend Dependencies & Build Output
+frontend/node_modules/
+frontend/dist/
+frontend/.npm/
+
+# IDE & Editor Files
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
