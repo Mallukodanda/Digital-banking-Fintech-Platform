@@ -37,7 +37,7 @@ jobs:
       url: https://staging.fintech.bank.internal
     steps:
       - name: Checkout Deployment Scripts & Compose
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Deploy Staging Stack via Docker Compose
         env:
@@ -67,7 +67,7 @@ jobs:
       url: https://bank.fintech.internal
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Deploy Production Stack (Protected Gate)
         env:
