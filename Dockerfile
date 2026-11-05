@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Build & Package Artifact
 # ==========================================
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9-eclipse-temurin-26-alpine AS builder
 
 WORKDIR /build
 
