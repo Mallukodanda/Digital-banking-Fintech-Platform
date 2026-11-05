@@ -16,7 +16,7 @@ RUN mvn clean package -DskipTests -B
 # ==========================================
 # Stage 2: Minimal Production JRE Runtime
 # ==========================================
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM eclipse-temurin:25-jre-alpine AS runtime
 
 # Create non-root system user for banking security compliance
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
